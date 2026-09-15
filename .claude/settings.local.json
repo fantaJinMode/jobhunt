@@ -4,5 +4,27 @@
       "Skill(claude-api)",
       "Skill(claude-api:*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; base=$(basename \"$f\" 2>/dev/null); if [[ \"$base\" =~ ^\\.env(\\..*)?$ ]] && [[ \"$base\" != *.example ]] && [[ \"$base\" != *.sample ]]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Blocked: .env files contain secrets and must not be read.\"}}'; fi; }"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | { read -r cmd; if echo \"$cmd\" | grep -Eq '\\.env(\\.[A-Za-z0-9_-]+)?([^A-Za-z0-9_.-]|$)' && ! echo \"$cmd\" | grep -Eiq '\\.env\\.(example|sample)\\b'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Blocked: command references a .env file, which contains secrets and must not be read.\"}}'; fi; }"
+          }
+        ]
+      }
+    ]
   }
 }
