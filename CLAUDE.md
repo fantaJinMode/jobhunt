@@ -89,7 +89,7 @@ DRAFT_MODEL=claude-sonnet-5
 
 ## Test Coverage
 
-No network, no API key, no cost. 55 tests covering:
+No network, no API key, no cost. 77 tests covering:
 
 - Each parser against fixtures in its **native** ATS shape
 - The two expensive bugs: Lever's epoch-ms timestamps (fixtures dates are generated relative to *now*, never hardcoded, so they can't silently age past the freshness gate) and the `\bsde\b` regex

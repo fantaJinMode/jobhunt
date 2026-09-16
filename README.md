@@ -85,13 +85,16 @@ This is the whole cost story — get it right and you spend cents a day.
 
 ```yaml
 filters:
-  include_titles: ['\bsde\b', 'software development engineer', ...]
-  exclude_titles: ['\b(staff|principal)\b', '\b(manager)\b', ...]
-  locations: [bangalore, bengaluru, india]
+  include_titles: ['software engineer', '\b(founding|lead|staff|senior)\b.*\bengineer\b', ...]
+  exclude_titles: ['\b(manager)\b', '\b(intern|junior)\b', ...]
+  locations: []              # city allowlist; empty = no city requirement
   allow_remote: true
+  require_remote: true       # location text must read remote; Ashby/Lever flags can veto
+  exclude_locations: ['\b(us|united states|canada)\b', '\b(europe|emea)\b', ...]  # remote-but-not-for-you
   max_age_days: 30
 score_threshold: 7.0
 max_per_digest: 5
+hard_constraints: ["Fully remote only; candidate lives in Kathmandu, Nepal", ...]  # screener rejects on these
 ```
 
 > **`sde` does not match "Software Development Engineer".** They share no
@@ -210,7 +213,7 @@ jobhunt/
   cli.py         argparse: profile / run / applied / stats
 config.yaml      filters, thresholds, paths
 companies.yaml   boards to poll
-tests/           55 tests, no network, no key
+tests/           77 tests, no network, no key
 ```
 
 HTTP is kept out of the parsers on purpose. Each `parse_*(slug, company, body)`

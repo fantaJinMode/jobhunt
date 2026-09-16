@@ -222,15 +222,19 @@ filters:
     - 'software engineer'
     - '\bsde\b'
   exclude_titles:     # ...and none of these
-    - '\b(staff|principal|senior)\b'    # drop levels you can't reach yet
+    - '\b(intern|junior)\b'             # drop levels that are not yours
     - '\b(sales|marketing|recruit)\b'
-  locations:          # matched against location + title
-    - bangalore
-    - bengaluru
+  locations: []       # city allowlist, matched against location + title; empty = any
   allow_remote: true
+  require_remote: true        # only remote survives; the location text decides
+  exclude_locations:          # regexes: "remote", but locked to a region you are not in
+    - '\b(us|united states|canada)\b'
+    - '\b(europe|emea)\b'
   max_age_days: 30
 score_threshold: 7.0  # below this, no draft and no digest slot
 max_per_digest: 5
+hard_constraints:     # sent to the screener; violating one scores 0-4
+  - "Fully remote only. The candidate lives in Kathmandu, Nepal."
 ```
 
 Two traps worth knowing:

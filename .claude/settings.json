@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:jobs.ashbyhq.com)",
+      "WebFetch(domain:www.olark.com)",
+      "WebFetch(domain:www.bandlab.com)",
+      "WebFetch(domain:hubstaff.com)",
+      "WebFetch(domain:www.crossover.com)",
+      "WebFetch(domain:www.igalia.com)",
+      "WebFetch(domain:www.scylladb.com)",
+      "WebFetch(domain:www.mailerlite.com)",
+      "Bash(sed -E 's#^seen_file: .*#seen_file: /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/seen.mock.json#; s#^digest_file: .*#digest_file: /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/digest.mock.html#; s#^tracker_csv: .*#tracker_csv: /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/tracker.mock.csv#' config.yaml)",
+      "Bash(sed -E 's#^seen_file: .*#seen_file: /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/seen.json#; s#^digest_file: .*#digest_file: /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/digest.html#; s#^tracker_csv: .*#tracker_csv: /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/tracker.csv#' config.yaml)",
+      "Bash(python -m jobhunt --config /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/config.mock.yaml run --mock --scorer keyword)",
+      "Bash(python -m jobhunt --config /private/tmp/claude-501/-Users-sonu-projects-pythonProjects-jobhunt/98705c1e-95e5-4c13-9dce-074e98442288/scratchpad/config.real.yaml run --scorer keyword --no-draft)",
+      "WebSearch"
+    ]
+  }
+}

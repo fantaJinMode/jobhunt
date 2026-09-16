@@ -17,7 +17,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from jobhunt import mock
-from jobhunt.fetch import parse_ashby, parse_greenhouse, parse_lever, strip_html
+from jobhunt.fetch import Job, parse_ashby, parse_greenhouse, parse_lever, strip_html
 from jobhunt.mock import fetch_all_mock
 from jobhunt.prefilter import prefilter
 
@@ -49,13 +49,34 @@ def test_strip_html_handles_none_and_empty():
 
 def test_greenhouse_maps_every_field():
     jobs = parse_greenhouse("acme-edge", "Acme Edge", mock.GREENHOUSE["acme-edge"])
-    j = next(j for j in jobs if j.title.startswith("Software Engineer II"))
+    j = next(j for j in jobs if j.title == "Senior Full Stack Engineer")
     assert j.job_id == "greenhouse:acme-edge:5501001"
     assert j.ats == "greenhouse"
     assert j.company == "Acme Edge"
-    assert j.location == "Bangalore, India"
+    assert j.location == "Remote"
     assert j.url.startswith("https://boards.greenhouse.io/")
-    assert "distributed services" in j.description
+    assert "React, TypeScript, Node" in j.description
+    assert j.remote is None   # Greenhouse has no remote flag; only the text
+
+
+def test_lever_reads_workplace_type_and_falls_back_to_all_locations():
+    body = [
+        {"id": "1", "text": "Engineer", "workplaceType": "remote",
+         "categories": {"location": "", "allLocations": ["Remote - Worldwide", "Lisbon"]}},
+        {"id": "2", "text": "Engineer", "workplaceType": "hybrid",
+         "categories": {"location": "Berlin"}},
+        {"id": "3", "text": "Engineer", "categories": {"location": "Berlin"}},
+    ]
+    a, b, c = parse_lever("x", "X", body)
+    assert a.remote is True and a.location == "Remote - Worldwide, Lisbon"
+    assert b.remote is False
+    assert c.remote is None
+
+
+def test_ashby_reads_the_is_remote_flag():
+    by = {j.title: j for j in parse_ashby("helioscale", "Helioscale", mock.ASHBY["helioscale"])}
+    assert by["AI Engineer, Agents"].remote is True
+    assert by["Software Engineer, Product"].remote is False
 
 
 def test_lever_concatenates_description_lists_and_additional():
@@ -81,13 +102,13 @@ def test_lever_createdAt_is_epoch_milliseconds():
 def test_ashby_skips_unlisted_drafts():
     jobs = parse_ashby("helioscale", "Helioscale", mock.ASHBY["helioscale"])
     assert all("unlisted" not in j.url for j in jobs)
-    assert len(jobs) == 2   # 3 postings, one isListed: false
+    assert len(jobs) == 3   # 4 postings, one isListed: false
 
 
 def test_ashby_reads_compensation_and_html_fallback():
     jobs = parse_ashby("helioscale", "Helioscale", mock.ASHBY["helioscale"])
-    networking = next(j for j in jobs if j.title == "Software Engineer, Networking")
-    assert networking.salary == "₹32L – ₹48L"
+    agents = next(j for j in jobs if j.title == "AI Engineer, Agents")
+    assert agents.salary == "₹32L – ₹48L"
     ds = next(j for j in jobs if j.title == "Data Scientist, Growth")
     assert "Causal inference" in ds.description   # descriptionHtml fallback
 
@@ -110,10 +131,13 @@ def test_parsers_take_decoded_json_not_a_response():
 # -------------------------------------------------------------- prefilter ---
 
 @pytest.mark.parametrize("title", [
-    "Software Engineer II, Distributed Systems",
+    "Senior Full Stack Engineer",
+    "Senior React Native Engineer",
+    "AI Engineer, Agents",
     "Software Development Engineer, Core Infra",
-    "Backend Engineer (Go)",
-    "Site Reliability Engineer",
+    "Staff Software Engineer",
+    "Founding Engineer",
+    "Senior JavaScript Developer",      # \bjava\b must not catch this
     "SDE II",
 ])
 def test_include_titles_match_real_titles(title):
@@ -132,11 +156,12 @@ def test_bare_sde_regex_does_not_match_the_spelled_out_title():
 
 
 @pytest.mark.parametrize("title", [
-    "Staff Software Engineer, Storage",       # too senior
     "Engineering Manager, Platform",          # management track
     "Enterprise Account Executive",           # wrong function
-    "Frontend Engineer, Design Systems",      # wrong discipline
     "Data Scientist, Growth",                 # wrong discipline
+    "Software Engineering Intern",            # too junior
+    "Site Reliability Engineer",              # wrong discipline
+    "Senior Golang Engineer",                 # wrong primary language
 ])
 def test_junk_titles_are_rejected(title):
     inc, exc = FILTERS["include_titles"], FILTERS["exclude_titles"]
@@ -145,16 +170,60 @@ def test_junk_titles_are_rejected(title):
     assert excluded or not included, f"{title!r} would have survived"
 
 
-def test_full_mock_funnel_keeps_only_the_five_real_matches():
+def test_full_mock_funnel_keeps_only_the_four_real_matches():
     kept = prefilter(fetch_all_mock(), FILTERS)
     titles = sorted(j.title for j in kept)
     assert titles == [
-        "Backend Engineer (Go)",
-        "Site Reliability Engineer",
+        "AI Engineer, Agents",
+        "Senior Full Stack Engineer",
+        "Senior React Native Engineer",
         "Software Development Engineer, Core Infra",
-        "Software Engineer II, Distributed Systems",
-        "Software Engineer, Networking",
     ]
+
+
+def _job(location: str, remote: bool | None = None,
+         title: str = "Senior Full Stack Engineer") -> Job:
+    return Job(job_id=f"lever:x:{location or 'blank'}", ats="lever", company="X",
+               title=title, location=location, url="https://example.com",
+               description="React", remote=remote)
+
+
+def test_region_locked_remote_is_dropped():
+    assert prefilter([_job("Remote - United States")], FILTERS) == []
+    assert prefilter([_job("Remote (EMEA only)")], FILTERS) == []
+
+
+def test_remote_flag_rescues_a_blank_location():
+    assert len(prefilter([_job("", remote=True)], FILTERS)) == 1
+
+
+def test_remote_flag_on_an_office_location_is_not_hire_from_anywhere():
+    """Ashby boards flag HQ roles isRemote=True (remote-possible). Real data:
+    Ramp's "New York, NY (HQ)" and Harvey's "San Francisco"."""
+    assert prefilter([_job("New York, NY (HQ)", remote=True)], FILTERS) == []
+    assert prefilter([_job("San Francisco", remote=True)], FILTERS) == []
+
+
+def test_region_locked_remote_in_every_spelling_is_dropped():
+    for loc in ["Germany (Remote)", "Remote, Poland", "Canada - Remote", "Remote-NORAM",
+                "Americas", "Remote within Canada or United States", "Remote US",
+                "Remote - New York, New York", "Remote, Europe"]:
+        assert prefilter([_job(loc, remote=True)], FILTERS) == [], loc
+    for loc in ["Remote", "Remote - Worldwide", "Anywhere", "Remote, Bangalore"]:
+        assert len(prefilter([_job(loc)], FILTERS)) == 1, loc
+
+
+def test_remote_flag_beats_remote_sounding_text():
+    assert prefilter([_job("Remote", remote=False)], FILTERS) == []
+
+
+def test_remote_word_in_the_title_does_not_make_an_office_job_remote():
+    j = _job("San Francisco, CA", title="Software Engineer II, Distributed Systems")
+    assert prefilter([j], FILTERS) == []
+
+
+def test_unknown_flag_and_blank_location_is_left_for_the_screener():
+    assert len(prefilter([_job("")], FILTERS)) == 1
 
 
 def test_stale_posting_is_dropped_by_freshness_gate():

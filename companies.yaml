@@ -23,16 +23,57 @@
 # noise and makes the prefilter counts impossible to reason about.
 
 companies:
-  - {ats: greenhouse, slug: stripe,      name: Stripe}
-  - {ats: greenhouse, slug: databricks,  name: Databricks}
-  - {ats: greenhouse, slug: cloudflare,  name: Cloudflare}
-  - {ats: greenhouse, slug: figma,       name: Figma}
-  - {ats: greenhouse, slug: dropbox,     name: Dropbox}
-  - {ats: greenhouse, slug: coinbase,    name: Coinbase}
-  - {ats: greenhouse, slug: reddit,      name: Reddit}
-  - {ats: lever,      slug: voleon,      name: Voleon}
+  - {ats: greenhouse, slug: mercury,     name: Mercury}
+  - {ats: greenhouse, slug: oura,        name: Oura}
+  - {ats: greenhouse, slug: calm,        name: Calm}
+  - {ats: greenhouse, slug: branch,      name: Branch}
+  - {ats: greenhouse, slug: attentive,   name: Attentive}
 
-  - {ats: ashby,      slug: openai,      name: OpenAI}
-  - {ats: ashby,      slug: ramp,        name: Ramp}
   - {ats: ashby,      slug: linear,      name: Linear}
-  - {ats: ashby,      slug: vanta,       name: Vanta}
+  - {ats: ashby,      slug: ramp,        name: Ramp}
+  - {ats: ashby,      slug: replit,      name: Replit}
+  - {ats: ashby,      slug: perplexity,  name: Perplexity}
+  - {ats: ashby,      slug: sierra,      name: Sierra}
+  - {ats: ashby,      slug: revenuecat,  name: RevenueCat}
+  - {ats: ashby,      slug: whoop,       name: Whoop}
+  - {ats: ashby,      slug: harvey,      name: Harvey}
+  - {ats: ashby,      slug: elevenlabs,  name: ElevenLabs}
+
+  # Established remote-first companies (github.com/yanirs/established-remote),
+  # kept only where the board was verified live on a supported ATS on 2026-09-15.
+  - {ats: greenhouse, slug: sourcegraph91, name: Sourcegraph}
+  - {ats: greenhouse, slug: vercel,        name: Vercel}
+  - {ats: greenhouse, slug: netlify,       name: Netlify}
+  - {ats: greenhouse, slug: remotecom,     name: Remote.com}
+  - {ats: greenhouse, slug: kentik,        name: Kentik}
+  - {ats: greenhouse, slug: gitlab,        name: GitLab}
+  - {ats: greenhouse, slug: grafanalabs,   name: Grafana Labs}
+  - {ats: greenhouse, slug: elastic,       name: Elastic}
+  - {ats: greenhouse, slug: mozilla,       name: Mozilla}
+  - {ats: greenhouse, slug: datadog,       name: Datadog}
+  - {ats: greenhouse, slug: cloudbeds,     name: Cloudbeds}
+  - {ats: greenhouse, slug: canonical,     name: Canonical}
+  - {ats: greenhouse, slug: saasgroup,     name: saas.group}
+  - {ats: greenhouse, slug: wikimedia,     name: Wikimedia Foundation}
+  - {ats: greenhouse, slug: upwork,        name: Upwork}
+  - {ats: greenhouse, slug: turing,        name: Turing}
+  - {ats: greenhouse, slug: gradle,        name: Gradle (Develocity)}
+  - {ats: greenhouse, slug: consensys,     name: Consensys}
+  - {ats: lever,      slug: superside,     name: Superside}
+  - {ats: lever,      slug: redoxengine,   name: Redox}
+  - {ats: lever,      slug: toptal,        name: Toptal}
+  - {ats: lever,      slug: sonatype,      name: Sonatype}
+  - {ats: ashby,      slug: zapier,        name: Zapier}
+  - {ats: ashby,      slug: helpscout,     name: Help Scout}
+  - {ats: ashby,      slug: buffer,        name: Buffer}
+  - {ats: ashby,      slug: percona,       name: Percona}
+  - {ats: greenhouse, slug: automatticcareers, name: Automattic}
+  - {ats: greenhouse, slug: platformsh,    name: Platform.sh}
+  - {ats: greenhouse, slug: block,         name: Block (Square)}
+  - {ats: greenhouse, slug: xapo61,        name: Xapo Bank}
+  - {ats: lever,      slug: envato-2,      name: Envato}
+  - {ats: ashby,      slug: duck-duck-go,  name: DuckDuckGo}
+
+  # Small, hire-from-anywhere startup found by direct search (not from the
+  # established-remote list). Verify job count stays sane before trusting it.
+  - {ats: ashby,      slug: infinity-constellation, name: Infinity}

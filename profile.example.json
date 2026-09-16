@@ -1,6 +1,7 @@
 {
   "name": "Sample Candidate",
   "current_title": "Software Engineer II",
+  "location": "Kathmandu, Nepal",
   "years_experience": 3,
   "core_skills": [
     "Go",

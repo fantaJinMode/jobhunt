@@ -55,8 +55,11 @@ through the exact same parsing code, not a stand-in.
 ### Filter — `[2/5]`
 **Files:** `prefilter.py`, `store.py`
 
-`prefilter()` applies `include_titles` / `exclude_titles` regex, a location
-list, and `max_age_days` — all before a single token is spent. Then
+`prefilter()` applies `include_titles` / `exclude_titles` regex, the remote
+gate (`require_remote`: the location text must read remote, Ashby `isRemote` /
+Lever `workplaceType` can veto or vouch for a blank location;
+`exclude_locations` regexes drop region-locked "remote"), an
+optional city list, and `max_age_days` — all before a single token is spent. Then
 `store.unseen()` drops anything already keyed in `seen.json` by `job_id`.
 
 > **Quirk —** `sde` as a bare regex does **not** match "Software Development

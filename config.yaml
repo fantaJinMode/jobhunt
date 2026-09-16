@@ -12,48 +12,55 @@ filters:
   # Engineer" — different words entirely. Use \bsde\b for the acronym and
   # list the spelled-out variants separately, as below.
   include_titles:
-    - '\b(software|backend|back-end|server|platform|infrastructure|infra|systems|distributed|cloud)\b.*\bengineer\b'
-    - '\bengineer\b.*\b(backend|back-end|platform|infrastructure|infra|systems|distributed)\b'
-    - '\bsde\b'
-    - '\bsde\s*-?\s*(i{1,3}|[123])\b'
+    - '\b(software|full[ -]?stack|front[ -]?end|back[ -]?end|web|product|platform|application|ai|ml|llm|agents?|mobile|react(\s*native)?|typescript|javascript|node(\.js)?)\b.*\b(engineer|developer)\b'
+    - '\b(engineer|developer)\b.*\b(full[ -]?stack|front[ -]?end|back[ -]?end|react(\s*native)?|typescript|javascript|node(\.js)?|mobile|ios|android|web|ai|llm|agents?)\b'
+    - '\b(founding|lead|staff|principal|senior)\b.*\b(engineer|developer)\b'
+    - '\b(sde|swe)\b'
     - 'software development engineer'
     - 'software engineer'
-    - 'site reliability engineer'
-    - '\bsre\b'
+    - 'software developer'
     - 'member of technical staff'
-    # systems / networking track — matches your DPDK, packet-processing and
-    # kernel background. Drop these if you widen away from low-level work.
-    - '\bnetwork(ing)?\s+(software\s+)?engineer\b'
-    - '\b(kernel|embedded|firmware|driver|packet|dataplane|data plane)\b.*\bengineer\b'
-    - '\bengineer\b.*\b(kernel|packet|dataplane|networking|performance)\b'
-    - '\bperformance engineer\b'
-    - '\bsystems engineer\b'
-    - '\bc\+\+\b.*\bengineer\b'
-    - '\bengineer\b.*\bc\+\+\b'
+    - '\b(tech|technical|engineering) lead\b'
+    - '\bforward[ -]deployed engineer\b'
+    - '\bapplied ai\b'
 
   # Anything matching these is dropped even if an include matched.
   exclude_titles:
-    - '\b(staff|principal|distinguished|fellow|architect)\b'      # too senior for now
-    # "Senior" at 2.5 years is a consistent 3-4 from the screener — dropping it
-    # here is free, dropping it after an LLM call is not. Delete this line once
-    # you are ~4 years in, or if you want to stretch-apply anyway.
-    - '\bsenior\b'
     - '\b(director|vp|vice president|head of|chief|cto)\b'
     - '\b(manager|management)\b'
-    - '\b(intern|internship|apprentice|trainee)\b'                # too junior
+    - '\b(intern|internship|apprentice|trainee|junior|entry[ -]level|new grad|graduate)\b'
     - '\b(sales|account executive|marketing|recruit|support|success)\b'
-    - '\b(frontend|front-end|ios|android|mobile|game|designer)\b' # wrong discipline
-    - '\b(data scientist|machine learning scientist|research scientist)\b'
+    - '\bsolutions? (engineer|architect)\b'
+    - '\b(qa|quality|test automation|sdet|security|devops|sre|site reliability|network(ing)?|infrastructure|data engineer|analytics engineer|data scientist|research scientist|machine learning scientist)\b'
+    - '\b(hardware|electrical|mechanical|civil|embedded|firmware|kernel|game|designer|ux)\b'
+    # wrong primary language in the title. \bjava\b does not match "JavaScript".
+    - '\b(golang|rust|ruby|rails|elixir|scala|java|kotlin|swift|flutter|salesforce|sap)\b|\.net\b|\bc#|\bc\+\+'
 
   # Substrings matched against "<location> <title>", case-insensitive.
-  # Leave empty to accept every location.
-  locations:
-    - bangalore
-    - bengaluru
-    - india
+  # Leave empty to accept every location. Irrelevant while require_remote is on.
+  locations: []
 
-  # If true, anything reading as remote passes the location gate.
+  # If true, anything whose *location* reads as remote passes the location gate.
   allow_remote: true
+
+  # If true, only postings that are remote survive. The location text decides
+  # ("Remote", "Anywhere", ...); Ashby `isRemote` / Lever `workplaceType` can
+  # veto, or vouch for a blank location. A posting with no flag and a blank
+  # location is kept so the screener can decide.
+  require_remote: true
+
+  # Regexes (case-insensitive) against the location string. A match drops the
+  # posting even when the board flags it remote: "Germany (Remote)" or "Remote
+  # within Canada or United States" is remote for someone else. Crude and
+  # free; the screener's hard_constraints catch what this misses.
+  # Deliberately does NOT list india / apac — some of those accept Nepal.
+  exclude_locations:
+    - '\b(us|usa|u\.s|united states|america|americas|north america|noram|canada)\b'
+    - '\b(uk|united kingdom|england|london|ireland|europe|eu|emea|germany|berlin|france|paris|spain|portugal|poland|netherlands|amsterdam|italy|sweden|denmark|norway|finland|switzerland|austria|belgium|czech|romania|hungary|greece|turkey|israel|uae|dubai)\b'
+    - '\b(latam|brazil|mexico|colombia|argentina|chile|australia|new zealand|japan|singapore|south africa|nigeria|kenya|philippines|vietnam|indonesia|pakistan|bangladesh|sri lanka)\b'
+    # "City, ST" is a US office even when the row also says Remote.
+    - ',\s*(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|dc)\b'
+    - '\b(new york|san francisco|california|texas|washington|seattle|austin|boston|chicago|denver|colorado|nevada|portland|los angeles|florida|atlanta|foster city)\b'
 
   # Drop postings older than this. Set to null to disable.
   # Boards often re-stamp `updated_at`, so this is a soft signal, not a promise.
@@ -65,6 +72,20 @@ screen_jd_chars: 1400     # JD truncation for screening
 draft_jd_chars: 6000      # JD truncation for drafting
 score_threshold: 7.0      # below this, no draft and no digest slot
 max_per_digest: 5         # hard cap on expensive draft calls per run
+
+# Sent to the screener verbatim. Violating one scores 0-4 regardless of
+# skills fit. Keep to things a JD can actually state.
+# Note: filters.require_remote already drops non-remote postings for free
+# before the LLM sees them, so onsite roles rarely reach this stage — these
+# apply mainly to ambiguous/blank-location postings the prefilter lets through.
+hard_constraints:
+  - "Roles restricted to residents of, or work authorization in, a specific country or region (e.g. 'US only', 'must be based in the EU', 'Remote - United States') are a hard reject."
+  - "Timezone-overlap requirements are NOT a reject; the candidate has worked US hours as a remote contractor for years."
+
+# Sent to the screener as soft signals: they should influence the score but
+# never zero it out the way a hard constraint does.
+preferences:
+  - "The candidate lives in Kathmandu, Nepal and is open to relocating for the right role. Remote is still strongly preferred — score an equivalent on-site/hybrid role somewhat lower, not zero."
 
 # --- paths ------------------------------------------------------------------
 companies_file: companies.yaml

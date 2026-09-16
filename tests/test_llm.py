@@ -126,6 +126,32 @@ def test_screen_truncates_the_jd_before_sending():
     assert jobs[0].description == "x" * 9000   # the Job itself is untouched
 
 
+def test_hard_constraints_reach_the_screener_only_when_given():
+    jobs = make_jobs(1)
+    stub = StubProvider([scores_reply(jobs), scores_reply(jobs)])
+
+    llm.screen(jobs, PROFILE, provider=stub, model="m")
+    llm.screen(jobs, PROFILE, provider=stub, model="m",
+               constraints=["Fully remote only; lives in Nepal"])
+
+    assert "HARD CONSTRAINTS" not in stub.calls[0]["user"]
+    assert "HARD CONSTRAINTS:\n- Fully remote only; lives in Nepal" in stub.calls[1]["user"]
+    assert len(stub.payload(1)) == 1   # the JOBS section still parses after it
+
+
+def test_preferences_reach_the_screener_only_when_given():
+    jobs = make_jobs(1)
+    stub = StubProvider([scores_reply(jobs), scores_reply(jobs)])
+
+    llm.screen(jobs, PROFILE, provider=stub, model="m")
+    llm.screen(jobs, PROFILE, provider=stub, model="m",
+               preferences=["Remote strongly preferred; open to relocating"])
+
+    assert "PREFERENCES" not in stub.calls[0]["user"]
+    assert "PREFERENCES:\n- Remote strongly preferred; open to relocating" in stub.calls[1]["user"]
+    assert len(stub.payload(1)) == 1   # the JOBS section still parses after it
+
+
 def test_draft_truncates_at_a_larger_limit():
     jobs = make_jobs(1, desc="y" * 20000)
     stub = StubProvider(['{"fit_summary":"ok","tailored_bullets":[],"gaps":[],'

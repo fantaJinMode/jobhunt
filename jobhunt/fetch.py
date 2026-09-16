@@ -40,6 +40,7 @@ class Job:
     description: str
     posted_at: str | None = None
     salary: str | None = None
+    remote: bool | None = None   # None = the board did not say (Greenhouse never does)
     # filled in later by the pipeline
     score: float | None = None
     reason: str | None = None
@@ -85,16 +86,20 @@ def parse_lever(slug: str, company: str, body: Any) -> list[Job]:
         posted = None
         if isinstance(ts, (int, float)):
             posted = time.strftime("%Y-%m-%d", time.gmtime(ts / 1000))
+        loc = (cats.get("location") or "").strip() or ", ".join(cats.get("allLocations") or [])
+        wt = (j.get("workplaceType") or "").lower()
+        remote = True if wt == "remote" else (False if wt in ("on-site", "onsite", "hybrid") else None)
         out.append(Job(
             job_id=f"lever:{slug}:{j.get('id')}",
             ats="lever",
             company=company,
             title=(j.get("text") or "").strip(),
-            location=(cats.get("location") or "").strip(),
+            location=loc,
             url=j.get("hostedUrl") or j.get("applyUrl") or "",
             description="\n\n".join(c for c in chunks if c).strip(),
             posted_at=posted,
             salary=cats.get("commitment"),
+            remote=remote,
         ))
     return out
 
@@ -119,6 +124,7 @@ def parse_ashby(slug: str, company: str, body: Any) -> list[Job]:
             description=(j.get("descriptionPlain") or strip_html(j.get("descriptionHtml")) or "").strip(),
             posted_at=j.get("publishedAt"),
             salary=salary,
+            remote=j.get("isRemote") if isinstance(j.get("isRemote"), bool) else None,
         ))
     return out
 

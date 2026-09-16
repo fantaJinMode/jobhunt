@@ -81,6 +81,7 @@ Return ONLY a JSON object, no prose, no markdown fences:
 {
   "name": str,
   "current_title": str,
+  "location": str,             // city, country as written on the resume
   "years_experience": number,
   "core_skills": [str],        // 10-20, most load-bearing first
   "domains": [str],            // e.g. "distributed systems", "CDN", "frontend"
@@ -137,6 +138,14 @@ work in.
 
 Do not inflate scores to be encouraging. Most postings are a 4.
 
+If the message lists HARD CONSTRAINTS, each one is a hard requirement: a job
+that violates one scores 0-4 and `reason` names the constraint. Use the
+candidate's `location` when judging residency or work-authorization rules.
+
+If the message lists PREFERENCES, they are soft signals, not hard
+requirements: factor them into the fit score like any other tradeoff instead
+of zeroing it out.
+
 Return ONLY a JSON array, one object per job, no prose:
 [{"job_id": str, "score": number, "reason": str}]
 Echo `job_id` back exactly as given. `reason` is one sentence, max 20 words,
@@ -144,7 +153,9 @@ concrete about the deciding factor."""
 
 
 def screen(jobs: list[Job], profile: dict, batch_size: int = 8, jd_chars: int = 1400,
-           provider: Provider | None = None, model: str | None = None) -> list[Job]:
+           provider: Provider | None = None, model: str | None = None,
+           constraints: list[str] | None = None,
+           preferences: list[str] | None = None) -> list[Job]:
     """Stage 1: score every surviving job. Mutates and returns `jobs`.
 
     A batch that fails to parse logs a warning and is skipped — one bad reply
@@ -154,6 +165,11 @@ def screen(jobs: list[Job], profile: dict, batch_size: int = 8, jd_chars: int = 
         provider, model = resolve("screen")
     batch_size = max(1, int(batch_size))
     profile_blob = json.dumps(profile, ensure_ascii=False)
+    head = f"CANDIDATE PROFILE:\n{profile_blob}\n\n"
+    if constraints:
+        head += "HARD CONSTRAINTS:\n" + "\n".join(f"- {c}" for c in constraints) + "\n\n"
+    if preferences:
+        head += "PREFERENCES:\n" + "\n".join(f"- {p}" for p in preferences) + "\n\n"
 
     for start in range(0, len(jobs), batch_size):
         batch = jobs[start:start + batch_size]
@@ -169,8 +185,7 @@ def screen(jobs: list[Job], profile: dict, batch_size: int = 8, jd_chars: int = 
         try:
             raw = provider.complete(
                 model, SCREEN_SYSTEM,
-                f"CANDIDATE PROFILE:\n{profile_blob}\n\n"
-                f"JOBS:\n{json.dumps(payload, ensure_ascii=False)}",
+                f"{head}JOBS:\n{json.dumps(payload, ensure_ascii=False)}",
                 SCREEN_MAX_TOKENS, json_mode=True,
             )
             results = {}

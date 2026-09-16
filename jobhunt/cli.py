@@ -141,7 +141,9 @@ def cmd_run(args) -> int:
         llm.screen(jobs, profile,
                    batch_size=int(cfg.get("screen_batch_size", 8)),
                    jd_chars=int(cfg.get("screen_jd_chars", 1400)),
-                   provider=provider, model=model)
+                   provider=provider, model=model,
+                   constraints=cfg.get("hard_constraints"),
+                   preferences=cfg.get("preferences"))
 
     # If every batch failed, the digest would be empty and — worse — we would
     # record these jobs as seen and never show them again. Bail instead.

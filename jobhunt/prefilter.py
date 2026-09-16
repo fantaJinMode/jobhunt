@@ -34,7 +34,9 @@ def prefilter(jobs: list[Job], cfg: dict) -> list[Job]:
     inc = cfg.get("include_titles") or [r"."]
     exc = cfg.get("exclude_titles") or []
     locs = [l.lower() for l in (cfg.get("locations") or [])]
+    exclude_locs = cfg.get("exclude_locations") or []
     allow_remote = bool(cfg.get("allow_remote", True))
+    require_remote = bool(cfg.get("require_remote", False))
     max_age = cfg.get("max_age_days")
     cutoff = datetime.now(timezone.utc) - timedelta(days=max_age) if max_age else None
 
@@ -44,9 +46,31 @@ def prefilter(jobs: list[Job], cfg: dict) -> list[Job]:
             stats["title"] += 1
             continue
 
-        if locs:
-            hay = f"{j.location} {j.title}".lower()
-            is_remote = allow_remote and any(h in hay for h in REMOTE_HINTS)
+        loc = j.location.lower()
+        # Hints are checked against the location only: "Distributed Systems"
+        # in a title says nothing about where you sit. When the location names
+        # a place, the text decides: Ashby boards flag "New York, NY (HQ)" as
+        # isRemote (remote-possible), which is not hire-from-anywhere. The flag
+        # can only veto, or vouch for a blank location.
+        hint = allow_remote and any(h in loc for h in REMOTE_HINTS)
+        if j.remote is False:
+            is_remote = False
+        elif not loc:
+            is_remote = j.remote is True
+        else:
+            is_remote = hint
+
+        if exclude_locs and _any_match(exclude_locs, j.location):
+            stats["location"] += 1
+            continue
+
+        if require_remote:
+            # Unknown flag and blank location: can't tell, let the screener decide.
+            if not is_remote and not (j.remote is None and not loc):
+                stats["location"] += 1
+                continue
+        elif locs:
+            hay = f"{loc} {j.title.lower()}"
             if not is_remote and not any(l in hay for l in locs):
                 stats["location"] += 1
                 continue
