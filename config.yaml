@@ -73,6 +73,12 @@ draft_jd_chars: 6000      # JD truncation for drafting
 score_threshold: 7.0      # below this, no draft and no digest slot
 max_per_digest: 5         # hard cap on expensive draft calls per run
 
+# Seconds to sleep between LLM calls (screen batches, draft calls). Free-tier
+# providers rate-limit by requests/minute — e.g. Gemini 3.6 Flash's free tier
+# allows 5 RPM, so set this to ~13 (60/5 + buffer) to stay under it. Leave at
+# 0 for paid tiers / providers with no meaningful rate limit.
+llm_request_delay: 0
+
 # Sent to the screener verbatim. Violating one scores 0-4 regardless of
 # skills fit. Keep to things a JD can actually state.
 # Note: filters.require_remote already drops non-remote postings for free

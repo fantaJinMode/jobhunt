@@ -113,6 +113,39 @@ def test_screen_batch_size_zero_does_not_hang():
     assert len(stub.calls) == 3
 
 
+def test_screen_sleeps_between_batches_when_a_delay_is_configured(monkeypatch):
+    jobs = make_jobs(20)
+    stub = StubProvider([scores_reply(jobs[i:i + 8]) for i in (0, 8, 16)])
+    slept = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: slept.append(s))
+
+    llm.screen(jobs, PROFILE, batch_size=8, provider=stub, model="m", request_delay=5)
+
+    assert slept == [5, 5, 5]
+
+
+def test_screen_sleep_defaults_to_zero_and_does_not_block(monkeypatch):
+    jobs = make_jobs(5)
+    stub = StubProvider([scores_reply(jobs)])
+    slept = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: slept.append(s))
+
+    llm.screen(jobs, PROFILE, batch_size=8, provider=stub, model="m")
+
+    assert slept == [0]
+
+
+def test_screen_sleeps_between_batches_even_after_a_failure(monkeypatch):
+    jobs = make_jobs(4)
+    stub = StubProvider(["I'd rather not answer that.", scores_reply(jobs[2:])])
+    slept = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: slept.append(s))
+
+    llm.screen(jobs, PROFILE, batch_size=2, provider=stub, model="m", request_delay=5)
+
+    assert slept == [5, 5]
+
+
 # ----------------------------------------------------------- truncation ----
 
 def test_screen_truncates_the_jd_before_sending():
@@ -276,6 +309,28 @@ def test_draft_makes_one_call_per_job():
     stub = StubProvider(['{"fit_summary":"a"}'] * 3)
     llm.draft(jobs, PROFILE, provider=stub, model="m")
     assert len(stub.calls) == 3
+
+
+def test_draft_sleeps_between_calls_when_a_delay_is_configured(monkeypatch):
+    jobs = make_jobs(3)
+    stub = StubProvider(['{"fit_summary":"a"}'] * 3)
+    slept = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: slept.append(s))
+
+    llm.draft(jobs, PROFILE, provider=stub, model="m", request_delay=13)
+
+    assert slept == [13, 13, 13]
+
+
+def test_draft_sleeps_between_calls_even_after_a_failure(monkeypatch):
+    jobs = make_jobs(2)
+    stub = StubProvider([LLMError("gemini HTTP 503"), '{"fit_summary":"a"}'])
+    slept = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: slept.append(s))
+
+    llm.draft(jobs, PROFILE, provider=stub, model="m", request_delay=13)
+
+    assert slept == [13, 13]
 
 
 # ------------------------------------------------- keyword stub (no API) ---

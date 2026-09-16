@@ -143,7 +143,8 @@ def cmd_run(args) -> int:
                    jd_chars=int(cfg.get("screen_jd_chars", 1400)),
                    provider=provider, model=model,
                    constraints=cfg.get("hard_constraints"),
-                   preferences=cfg.get("preferences"))
+                   preferences=cfg.get("preferences"),
+                   request_delay=float(cfg.get("llm_request_delay", 0)))
 
     # If every batch failed, the digest would be empty and — worse — we would
     # record these jobs as seen and never show them again. Bail instead.
@@ -171,7 +172,8 @@ def cmd_run(args) -> int:
             print(f"  via {provider.name}/{model}")
             llm.draft(shortlist, profile,
                       jd_chars=int(cfg.get("draft_jd_chars", 6000)),
-                      provider=provider, model=model)
+                      provider=provider, model=model,
+                      request_delay=float(cfg.get("llm_request_delay", 0)))
         except LLMError as e:
             print(f"  ! drafting unavailable: {e}")
 

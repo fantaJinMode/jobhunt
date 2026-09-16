@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from typing import Any
 
 from .fetch import Job
@@ -155,11 +156,15 @@ concrete about the deciding factor."""
 def screen(jobs: list[Job], profile: dict, batch_size: int = 8, jd_chars: int = 1400,
            provider: Provider | None = None, model: str | None = None,
            constraints: list[str] | None = None,
-           preferences: list[str] | None = None) -> list[Job]:
+           preferences: list[str] | None = None,
+           request_delay: float = 0.0) -> list[Job]:
     """Stage 1: score every surviving job. Mutates and returns `jobs`.
 
     A batch that fails to parse logs a warning and is skipped — one bad reply
     must not take down the whole run.
+
+    `request_delay` paces calls to stay under a free-tier requests/minute cap
+    (see config.yaml `llm_request_delay`). Defaults to 0 — no change unless set.
     """
     if provider is None or model is None:
         provider, model = resolve("screen")
@@ -195,6 +200,7 @@ def screen(jobs: list[Job], profile: dict, batch_size: int = 8, jd_chars: int = 
                     results[str(jid)] = r
         except (LLMError, ValueError, KeyError, TypeError) as e:
             print(f"  ! screen batch {n} failed ({type(e).__name__}: {e}) — skipping")
+            time.sleep(request_delay)
             continue
 
         for j in batch:
@@ -208,6 +214,7 @@ def screen(jobs: list[Job], profile: dict, batch_size: int = 8, jd_chars: int = 
             j.reason = str(r.get("reason", "")).strip()
 
         print(f"  screened {min(start + batch_size, len(jobs))}/{len(jobs)}")
+        time.sleep(request_delay)
 
     return jobs
 
@@ -236,8 +243,13 @@ Return ONLY a JSON object, no prose:
 
 
 def draft(jobs: list[Job], profile: dict, jd_chars: int = 6000,
-          provider: Provider | None = None, model: str | None = None) -> list[Job]:
-    """Stage 2: full kit for the shortlist. One call per job, best model."""
+          provider: Provider | None = None, model: str | None = None,
+          request_delay: float = 0.0) -> list[Job]:
+    """Stage 2: full kit for the shortlist. One call per job, best model.
+
+    `request_delay` paces calls to stay under a free-tier requests/minute cap
+    (see config.yaml `llm_request_delay`). Defaults to 0 — no change unless set.
+    """
     if provider is None or model is None:
         provider, model = resolve("draft")
     profile_blob = json.dumps(profile, ensure_ascii=False)
@@ -266,6 +278,8 @@ def draft(jobs: list[Job], profile: dict, jd_chars: int = 6000,
         except (LLMError, ValueError, KeyError, TypeError) as e:
             print(f"  ! draft failed for {j.job_id} ({type(e).__name__}: {e})")
             j.draft = {k: ("" if k in ("fit_summary", "cover_note") else []) for k in DRAFT_KEYS}
+
+        time.sleep(request_delay)
 
     return jobs
 
