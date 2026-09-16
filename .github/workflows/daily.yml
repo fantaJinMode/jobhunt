@@ -2,10 +2,11 @@ name: daily job digest
 
 on:
   schedule:
-    # 06:00 IST, weekdays. IST is UTC+5:30, so 06:00 IST == 00:30 UTC.
+    # 02:00 NPT (Nepal Time), weekdays. NPT is UTC+5:45, so 02:00 NPT ==
+    # 20:15 UTC the previous day — hence Sun-Thu UTC for a Mon-Fri NPT week.
     # GitHub's scheduler is best-effort and can lag by several minutes under
     # load — that is fine for a job digest, do not tighten it.
-    - cron: "30 0 * * 1-5"
+    - cron: "15 20 * * 0-4"
   workflow_dispatch:
     inputs:
       dry_run:

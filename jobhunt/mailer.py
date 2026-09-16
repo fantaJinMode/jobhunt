@@ -9,8 +9,12 @@ from email.message import EmailMessage
 def send(subject: str, html_body: str) -> None:
     host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     port = int(os.getenv("SMTP_PORT", "587"))
-    user = os.environ["SMTP_USER"]
-    password = os.environ["SMTP_PASS"]
+    # Gmail app passwords copy-paste with non-breaking spaces between the
+    # 4-char groups; smtplib's AUTH PLAIN does a hard .encode('ascii') on
+    # user+password, so a stray \xa0 crashes login with a cryptic
+    # UnicodeEncodeError. Strip all whitespace, not just regular spaces.
+    user = "".join(os.environ["SMTP_USER"].split())
+    password = "".join(os.environ["SMTP_PASS"].split())
     to_addr = os.getenv("MAIL_TO", user)
 
     msg = EmailMessage()
