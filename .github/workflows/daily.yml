@@ -57,7 +57,7 @@ jobs:
         #   python -m jobhunt profile --resume resume.pdf
         # then paste the file contents into the PROFILE_JSON repo secret.
         env:
-          PROFILE_JSON: ${{ secrets.PROFILE_JSON }}
+          PROFILE_JSON: ${{ vars.PROFILE_JSON }}
         run: |
           if [ -z "$PROFILE_JSON" ]; then
             echo "::error::PROFILE_JSON secret is empty — see the README"
